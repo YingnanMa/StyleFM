@@ -4,11 +4,6 @@
 
 ## Overview
 
-This project extends StyleID with **frequency-domain processing** and **recursive Q/K/V feature mixing** to achieve enhanced style transfer results. Our key contributions include:
-
-- 🎨 **Frequency-Enhanced Feature Extraction**: Separate processing of content (high-frequency) and style (low-mid frequency) features
-- 🔄 **Recursive Q/K/V Mixing**: Progressive feature blending across diffusion timesteps
-- 🚀 **Training-free**: No additional training required, works directly with pre-trained Stable Diffusion models
 
 
 
