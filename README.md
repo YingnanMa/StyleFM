@@ -10,7 +10,6 @@ This project extends StyleID with **frequency-domain processing** and **recursiv
 - 🔄 **Recursive Q/K/V Mixing**: Progressive feature blending across diffusion timesteps
 - 🚀 **Training-free**: No additional training required, works directly with pre-trained Stable Diffusion models
 
-## Key Innovations
 
 
 ## Usage
