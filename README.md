@@ -63,9 +63,6 @@ run:
 python util/copy_inputs.py --cnt data/cnt --sty data/sty
 ```
 
-We largely employ [matthias-wright/art-fid](https://github.com/matthias-wright/art-fid) and [mahmoudnafifi/HistoGAN](https://github.com/mahmoudnafifi/HistoGAN) for our evaluation.
-
-
 ```bash
 # Art-LPIPS
 cd evaluation
