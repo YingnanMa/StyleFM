@@ -49,7 +49,6 @@ output_path/
 ├── content1_stylized_style1.png
 ├── content1_stylized_style2.png
 ├── ...
-└── debug_info_pair_0.pkl (if --save_debug)
 ```
 
 ## Evaluation
