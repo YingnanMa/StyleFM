@@ -55,12 +55,13 @@ To fine-tune the parameters, you have control over the following aspects in the 
 For a quantitative evaluation, we incorporate a set of randomly selected inputs from [MS-COCO](https://cocodataset.org) and [WikiArt](https://github.com/cs-chan/ArtGAN/tree/master/WikiArt%20Dataset) in "./data" directory.
 
 
-Before executing evalution code, please duplicate the content and style images to match the number of stylized images first. (40 styles, 20 contents -> 800 style images, 800 content images)
+Before executing evalution code, please duplicate the content and style images to match the number of stylized images first, the visualiaztion image we used in the paper are located under foler /data_vis. (40 styles, 20 contents -> 800 style images, 800 content images)
 
 run:
 ```
 python util/copy_inputs.py --cnt data/cnt --sty data/sty
 ```
+
 For running the evaluation:
 
 ```bash
