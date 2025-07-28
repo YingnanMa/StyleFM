@@ -42,7 +42,7 @@ python run_inference.py --cnt data/cnt --sty data/sty  # default
 
 To fine-tune the parameters, you have control over the following aspects in the style transfer:
 
-- **Attention Recursive weight** is controlled by the `--q_prime_weight` and `--k_prime_weight` parameter.
+- **Attention Recursive weight** is controlled by the `--q_prime_weight` and `--k_prime_weight` parameter(k,v share the same weight).
 - **Content frequency enhance weight** is controlled through the `--cnt_freq_weight` parameter.
 - **Style frequency enhance weight** is controlled through the `--sty_freq_weight` parameter.
 
