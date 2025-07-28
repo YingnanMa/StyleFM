@@ -12,15 +12,6 @@ This project extends StyleID with **frequency-domain processing** and **recursiv
 
 ## Key Innovations
 
-### 1. Frequency Domain Processing
-- **Content Enhancement**: High-pass and mid-high pass filtering to preserve structural details
-- **Style Enhancement**: Low-mid pass filtering to capture artistic patterns
-- **Adaptive Weighting**: Configurable frequency component mixing
-
-### 2. Recursive Feature Mixing
-- **Q Feature Mixing**: `Q[t]' = Q[t] + α × Q[t-1]'` (from content)
-- **K/V Feature Mixing**: `K[t]' = K[t] + β × K[t-1]'` (from style)
-- **Progressive Enhancement**: Features accumulate across timesteps for stronger style transfer
 
 ## Usage
 
@@ -43,9 +34,9 @@ conda activate StyleID_Freq
 ln -s <path/to/model.ckpt> models/ldm/stable-diffusion-v1/model.ckpt
 ```
 
-3. **Install Frequency Utilities**
+3. **Install All dependency**
 ```bash
-# Ensure frequency_util.py is in src/
+pip install -r requirements.txt
 ```
 
 ## Run Frequency-Enhanced StyleID
