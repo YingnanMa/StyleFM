@@ -40,7 +40,7 @@ pip install -r requirements.txt
 
 ### Basic Usage
 ```bash
-python run_styleid_freq.py --cnt <content_dir> --sty <style_dir>
+python run_inference.py --cnt <content_dir> --sty <style_dir>
 ```
 
 ### Example Commands
