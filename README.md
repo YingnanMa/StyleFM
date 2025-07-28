@@ -43,37 +43,6 @@ pip install -r requirements.txt
 python run_inference.py --cnt <content_dir> --sty <style_dir>
 ```
 
-### Example Commands
-```bash
-# Default settings
-python run_styleid_freq.py --cnt ./samplecnt --sty ./samplesty
-
-# Strong frequency enhancement
-python run_styleid_freq.py --cnt ./samplecnt --sty ./samplesty \
-    --cnt_freq_weight 0.7 --sty_freq_weight 0.5 \
-    --q_prime_weight 0.3 --k_prime_weight 0.3
-
-# Subtle style transfer
-python run_styleid_freq.py --cnt ./samplecnt --sty ./samplesty \
-    --cnt_freq_weight 0.3 --sty_freq_weight 0.2 \
-    --q_prime_weight 0.15 --k_prime_weight 0.15
-```
-
-
-## Technical Details
-
-### Frequency Processing Pipeline
-```
-Content Image → DDIM Inversion → Frequency Enhancement (High-pass) → Q Feature Extraction
-Style Image → DDIM Inversion → Frequency Enhancement (Low-mid) → K/V Feature Extraction
-```
-
-### Recursive Mixing Process
-```
-t=0: Q[0]' = Q[0] + α×Q[FM], K[0]' = K[0] + β×K[FM]
-t>0: Q[t]' = Q[t] + α×Q[t-1]', K[t]' = K[t] + β×K[t-1]'
-```
-
 ## Output Structure
 ```
 output_path/
@@ -82,29 +51,6 @@ output_path/
 ├── ...
 └── debug_info_pair_0.pkl (if --save_debug)
 ```
-
-## Performance
-
-- **Speed**: ~15-16 it/s on NVIDIA RTX GPU
-- **Memory**: ~18.5GB VRAM usage
-- **Quality**: Enhanced detail preservation with better style transfer
-
-## Troubleshooting
-
-1. **GPU Memory Issues**
-   - Reduce batch size to 1
-   - Use smaller images (512x512)
-   - Clear GPU cache between pairs
-
-2. **Weak Style Transfer**
-   - Increase `--sty_freq_weight` (up to 0.5)
-   - Increase `--k_prime_weight` (up to 0.4)
-   - Decrease `--start_step` to 40-45
-
-3. **Loss of Content Structure**
-   - Decrease `--cnt_freq_weight` (down to 0.3)
-   - Decrease `--q_prime_weight` (down to 0.15)
-   - Ensure `--cnt_alpha` ≥ 0.7
 
 ## Evaluation
 
@@ -116,8 +62,6 @@ cd evaluation
 python eval_artlpips.py --tar ../output
 
 ```
-
-
 
 ## Acknowledgments
 
