@@ -1,15 +1,13 @@
 # StyleFM
 
-## Usage
 
 ### Prerequisites
-- Single GPU with 24GB+ VRAM
+- Single V100 GPU
 - Python 3.8+
 - PyTorch 1.8.1+
 
 ## Setup
-Our codebase is built on ([CompVis/stable-diffusion](https://github.com/CompVis/stable-diffusion), [Jiwoogit/StyleID](https://github.com/jiwoogit/StyleID/blob/main/README.md) and [MichalGeyer/plug-and-play](https://github.com/MichalGeyer/plug-and-play))
-and has similar dependencies and model architecture.
+Our codebase is built on ([CompVis/stable-diffusion](https://github.com/CompVis/stable-diffusion), [Jiwoogit/StyleID](https://github.com/jiwoogit/StyleID/blob/main/README.md) and [MichalGeyer/plug-and-play](https://github.com/MichalGeyer/plug-and-play)).
 
 ### Create a Conda Environment
 
@@ -47,14 +45,10 @@ To fine-tune the parameters, you have control over the following aspects in the 
 - **Style frequency enhance weight** is controlled through the `--sty_freq_weight` parameter.
 
 
-## Evaluation
+## Testing
 
-
-For a quantitative evaluation, we incorporate a set of randomly selected inputs from [MS-COCO](https://cocodataset.org) and [WikiArt](https://github.com/cs-chan/ArtGAN/tree/master/WikiArt%20Dataset) in "./data" directory.
-
-
-Before executing evalution code, please duplicate the content and style images to match the number of stylized images first, the visualiaztion image we used in the paper are located under foler /data_vis. (40 styles, 20 contents -> 800 style images, 800 content images)
-
+Testset (from StyleID) are provided in "./data" directory. Before executing evalution code, please duplicate the content and style images to match the number of stylized images first (40 styles, 20 contents -> 800 style images, 800 content images)
+The visualiaztion image we used in the paper are located under foler /data_vis.
 run:
 ```
 python util/copy_inputs.py --cnt data/cnt --sty data/sty
