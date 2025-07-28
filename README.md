@@ -73,6 +73,3 @@ This work is based on:
 - [CompVis/stable-diffusion](https://github.com/CompVis/stable-diffusion) - The base diffusion model
 - [MichalGeyer/plug-and-play](https://github.com/MichalGeyer/plug-and-play) - Attention manipulation techniques
 
-## License
-
-This project inherits the license from StyleID and Stable Diffusion. Please refer to their respective licenses for usage terms.
