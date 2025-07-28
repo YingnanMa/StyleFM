@@ -23,6 +23,7 @@ conda activate StyleFM
 ```
 
 2. **Download Stable Diffusion Weights**
+Download the StableDiffusion weights from the CompVis organization at Hugging Face (download the sd-v1-4.ckpt file), and link them:
 ```bash
 # Download sd-v1-4.ckpt from HuggingFace
 ln -s <path/to/model.ckpt> models/ldm/stable-diffusion-v1/model.ckpt
