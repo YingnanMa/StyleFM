@@ -15,6 +15,8 @@
 - PyTorch 1.8.1+
 
 ### Setup
+Our codebase is built on ([CompVis/stable-diffusion](https://github.com/CompVis/stable-diffusion) and [Jiwoogit/StyleID](https://github.com/jiwoogit/StyleID/blob/main/README.md))
+and has similar dependencies and model architecture.
 
 1. **Create Conda Environment**
 ```bash
