@@ -13,24 +13,21 @@
 Our codebase is built on ([CompVis/stable-diffusion](https://github.com/CompVis/stable-diffusion), [Jiwoogit/StyleID](https://github.com/jiwoogit/StyleID/blob/main/README.md) and [MichalGeyer/plug-and-play](https://github.com/MichalGeyer/plug-and-play))
 and has similar dependencies and model architecture.
 
-1. **Create Conda Environment**
-```bash
+### Create a Conda Environment
+
+```
 conda env create -f environment.yaml
-conda activate StyleFM
+conda activate StyleID
 ```
 
-2. **Download Stable Diffusion Weights**
-   
+### Download StableDiffusion Weights
+
 Download the StableDiffusion weights from the [CompVis organization at Hugging Face](https://huggingface.co/CompVis/stable-diffusion-v-1-4-original)
 (download the `sd-v1-4.ckpt` file), and link them:
 ```
 ln -s <path/to/model.ckpt> models/ldm/stable-diffusion-v1/model.ckpt 
 ```
 
-3. **Install All dependency**
-```bash
-pip install -r requirements.txt
-```
 
 ## Run StyleFM
 
