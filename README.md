@@ -10,7 +10,7 @@
 ## Usage
 
 ### Prerequisites
-- Single GPU with 20GB+ VRAM
+- Single GPU with 24GB+ VRAM
 - Python 3.8+
 - PyTorch 1.8.1+
 
