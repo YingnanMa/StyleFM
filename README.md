@@ -19,7 +19,7 @@
 1. **Create Conda Environment**
 ```bash
 conda env create -f environment.yaml
-conda activate StyleID_Freq
+conda activate StyleFM
 ```
 
 2. **Download Stable Diffusion Weights**
