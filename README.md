@@ -2,13 +2,6 @@
 
 StyleID is a novel approach for text-to-image generation that preserves identity information while applying artistic style transformations. This implementation leverages Stable Diffusion with advanced attention mechanisms and frequency-domain processing to achieve high-quality style transfer with identity preservation.
 
-## Features
-
-- **Identity-Preserving Style Transfer**: Maintains the structural identity of content images while applying artistic styles
-- **Frequency-Domain Processing**: Separate handling of high-frequency content details and low-mid frequency style patterns
-- **Recursive Attention Mixing**: Progressive blending of Q' and K' features across denoising timesteps
-- **AdaIN Integration**: Adaptive Instance Normalization for better style-content alignment
-- **Batch Processing**: Efficient processing of multiple content-style combinations
 
 ## Requirements
 
