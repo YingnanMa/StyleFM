@@ -33,7 +33,7 @@ ln -s <path/to/model.ckpt> models/ldm/stable-diffusion-v1/model.ckpt
 
 ### Basic Usage
 ```bash
-python run_inference.py --cnt <content_dir> --sty <style_dir>
+python run_inference.py --cnt <content_dir> --sty <style_dir> # for default result run python run_inference.py
 ```
 
 ## Evaluation
