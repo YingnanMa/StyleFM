@@ -1,113 +1,191 @@
-# StyleID: Identity-Preserving Text-to-Image Generation
+# Frequency-Enhanced Style Injection with Recursive Feature Mixing for Diffusion-Based Style Transfer
 
-StyleID is a novel approach for text-to-image generation that preserves identity information while applying artistic style transformations. This implementation leverages Stable Diffusion with advanced attention mechanisms and frequency-domain processing to achieve high-quality style transfer with identity preservation.
+### [Based on StyleID](https://github.com/jiwoogit/StyleID) / [Original Paper](https://arxiv.org/abs/2312.09008)
 
+![imgs](asset/imgs.png)
 
-## Requirements
+## Overview
 
-- Python 3.8+
-- PyTorch 1.11.0 with CUDA support
-- Stable Diffusion v1 checkpoint
+This project extends StyleID with **frequency-domain processing** and **recursive Q/K/V feature mixing** to achieve enhanced style transfer results. Our key contributions include:
 
-Install dependencies:
-```bash
-pip install -r requirements.txt
-```
+- 🎨 **Frequency-Enhanced Feature Extraction**: Separate processing of content (high-frequency) and style (low-mid frequency) features
+- 🔄 **Recursive Q/K/V Mixing**: Progressive feature blending across diffusion timesteps
+- 🚀 **Training-free**: No additional training required, works directly with pre-trained Stable Diffusion models
 
-## Installation
+## Key Innovations
 
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/StyleID.git
-cd StyleID
-```
+### 1. Frequency Domain Processing
+- **Content Enhancement**: High-pass and mid-high pass filtering to preserve structural details
+- **Style Enhancement**: Low-mid pass filtering to capture artistic patterns
+- **Adaptive Weighting**: Configurable frequency component mixing
 
-2. Download the Stable Diffusion v1 model checkpoint:
-   - Place the model checkpoint at `models/ldm/stable-diffusion-v1/model.ckpt`
-
-3. Install the required packages:
-```bash
-pip install -r requirements.txt
-```
+### 2. Recursive Feature Mixing
+- **Q Feature Mixing**: `Q[t]' = Q[t] + α × Q[t-1]'` (from content)
+- **K/V Feature Mixing**: `K[t]' = K[t] + β × K[t-1]'` (from style)
+- **Progressive Enhancement**: Features accumulate across timesteps for stronger style transfer
 
 ## Usage
 
+### Prerequisites
+- Single GPU with 20GB+ VRAM
+- Python 3.8+
+- PyTorch 1.8.1+
+
+### Setup
+
+1. **Create Conda Environment**
+```bash
+conda env create -f environment.yaml
+conda activate StyleID_Freq
+```
+
+2. **Download Stable Diffusion Weights**
+```bash
+# Download sd-v1-4.ckpt from HuggingFace
+ln -s <path/to/model.ckpt> models/ldm/stable-diffusion-v1/model.ckpt
+```
+
+3. **Install Frequency Utilities**
+```bash
+# Ensure frequency_util.py is in src/
+```
+
+## Run Frequency-Enhanced StyleID
+
 ### Basic Usage
+```bash
+python run_styleid_freq.py --cnt <content_dir> --sty <style_dir>
+```
 
-Run style transfer on default content and style images:
+### Example Commands
+```bash
+# Default settings
+python run_styleid_freq.py --cnt ./samplecnt --sty ./samplesty
+
+# Strong frequency enhancement
+python run_styleid_freq.py --cnt ./samplecnt --sty ./samplesty \
+    --cnt_freq_weight 0.7 --sty_freq_weight 0.5 \
+    --q_prime_weight 0.3 --k_prime_weight 0.3
+
+# Subtle style transfer
+python run_styleid_freq.py --cnt ./samplecnt --sty ./samplesty \
+    --cnt_freq_weight 0.3 --sty_freq_weight 0.2 \
+    --q_prime_weight 0.15 --k_prime_weight 0.15
+```
+
+## Key Parameters
+
+### Frequency Processing Parameters
+
+#### Content Frequency Enhancement
+- `--cnt_d_s_high`: Spatial parameter for high-pass filter (default: 0.7)
+- `--cnt_d_s_midhigh`: Spatial parameter for mid-high pass filter (default: 0.5)
+- `--cnt_freq_weight`: Weight for high frequency enhancement (default: 0.5)
+- `--cnt_alpha`: Noise control factor (default: 0.7)
+
+#### Style Frequency Enhancement
+- `--sty_d_s_lowmid`: Spatial parameter for low-mid pass filter (default: 0.7)
+- `--sty_freq_weight`: Weight for low-mid frequency enhancement (default: 0.3)
+
+### Recursive Mixing Parameters
+- `--q_prime_weight`: Recursive Q mixing weight (default: 0.25)
+- `--k_prime_weight`: Recursive K/V mixing weight (default: 0.25)
+
+### Original StyleID Parameters
+- `--T`: Attention temperature scaling (default: 1.0)
+- `--start_step`: Starting step for feature injection (default: 49)
+- `--ddim_steps`: Number of DDIM steps (default: 50)
+- `--ddim_eta`: DDIM stochasticity (default: 0.0 for deterministic)
+
+### Additional Options
+- `--without_init_adain`: Disable initial AdaIN
+- `--without_attn_injection`: Disable attention injection (not recommended)
+- `--enable_verification`: Enable detailed debugging output
+- `--save_debug`: Save debugging information to file
+
+## Technical Details
+
+### Frequency Processing Pipeline
+```
+Content Image → DDIM Inversion → Frequency Enhancement (High-pass) → Q Feature Extraction
+Style Image → DDIM Inversion → Frequency Enhancement (Low-mid) → K/V Feature Extraction
+```
+
+### Recursive Mixing Process
+```
+t=0: Q[0]' = Q[0] + α×Q[FM], K[0]' = K[0] + β×K[FM]
+t>0: Q[t]' = Q[t] + α×Q[t-1]', K[t]' = K[t] + β×K[t-1]'
+```
+
+## Output Structure
+```
+output_path/
+├── content1_stylized_style1.png
+├── content1_stylized_style2.png
+├── ...
+└── debug_info_pair_0.pkl (if --save_debug)
+```
+
+## Performance
+
+- **Speed**: ~15-16 it/s on NVIDIA RTX GPU
+- **Memory**: ~18.5GB VRAM usage
+- **Quality**: Enhanced detail preservation with better style transfer
+
+## Troubleshooting
+
+1. **GPU Memory Issues**
+   - Reduce batch size to 1
+   - Use smaller images (512x512)
+   - Clear GPU cache between pairs
+
+2. **Weak Style Transfer**
+   - Increase `--sty_freq_weight` (up to 0.5)
+   - Increase `--k_prime_weight` (up to 0.4)
+   - Decrease `--start_step` to 40-45
+
+3. **Loss of Content Structure**
+   - Decrease `--cnt_freq_weight` (down to 0.3)
+   - Decrease `--q_prime_weight` (down to 0.15)
+   - Ensure `--cnt_alpha` ≥ 0.7
+
+## Evaluation
+
+Use the same evaluation metrics as StyleID:
 
 ```bash
-python run_inference.py
-```
+# Art-FID
+cd evaluation
+python eval_artfid.py --sty ../data/sty_eval --cnt ../data/cnt_eval --tar ../output
 
-### Custom Inputs
-
-Specify your own content and style directories:
-
-```bash
-python run_inference.py --cnt path/to/content/images --sty path/to/style/images --output_path results
-```
-
-### Advanced Parameters
-
-```bash
-python run_inference.py \
-    --cnt ./data/cnt \
-    --sty ./data/sty \
-    --output_path ./output \
-    --ddim_inv_steps 50 \
-    --ddim_eta 0.0 \
-    --T 1.0 \
-    --q_prime_weight 0.1 \
-    --k_prime_weight 0.1 \
-    --cnt_freq_weight 0.5 \
-    --sty_freq_weight 0.3
-```
-
-
-## Output
-
-Results are saved to the specified output directory with filenames in the format:
-`{content_name}_stylized_{style_name}.png`
-
-
-## Project Structure
-
-```
-StyleID/
-├── data/
-│   ├── cnt/          # Content images
-│   └── sty/          # Style images
-├── ldm/              # Latent Diffusion Model components
-│   ├── models/       # Model architectures
-│   └── modules/      # Model modules (attention, etc.)
-├── models/           # Model configurations
-├── util/             # Utility functions
-│   └── frequency_util.py  # Frequency processing utilities
-├── evaluation/       # Evaluation metrics
-├── run_inference.py  # Main inference script
-└── requirements.txt
+# Histogram Loss
+python eval_histogan.py --sty ../data/sty_eval --tar ../output
 ```
 
 ## Citation
 
-If you use this code in your research, please cite:
+If you use this frequency-enhanced version, please cite both the original StyleID paper and acknowledge our frequency enhancement:
 
-```bibtex
-@article{styleid2024,
-  title={StyleID: Identity-Preserving Text-to-Image Generation},
-  author={Your Name},
-  journal={arXiv preprint},
-  year={2024}
+```BibTeX
+@InProceedings{Chung_2024_CVPR,
+    author    = {Chung, Jiwoo and Hyun, Sangeek and Heo, Jae-Pil},
+    title     = {Style Injection in Diffusion: A Training-free Approach for Adapting Large-scale Diffusion Models for Style Transfer},
+    booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+    month     = {June},
+    year      = {2024},
+    pages     = {8795-8805}
 }
+
+# Also acknowledge the frequency enhancement extension
 ```
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Acknowledgments
 
-- Built upon Stable Diffusion v1
-- Inspired by attention-based style transfer methods
-- Uses frequency domain analysis for content-style separation
+This work is based on:
+- [StyleID](https://github.com/jiwoogit/StyleID) - The original style injection method
+- [CompVis/stable-diffusion](https://github.com/CompVis/stable-diffusion) - The base diffusion model
+- [MichalGeyer/plug-and-play](https://github.com/MichalGeyer/plug-and-play) - Attention manipulation techniques
+
+## License
+
+This project inherits the license from StyleID and Stable Diffusion. Please refer to their respective licenses for usage terms.
