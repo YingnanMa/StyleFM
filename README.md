@@ -1,7 +1,5 @@
 # StyleFM
 
-![imgs](asset/imgs.png)
-
 ## Usage
 
 ### Prerequisites
