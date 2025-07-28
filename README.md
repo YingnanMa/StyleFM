@@ -160,22 +160,7 @@ python eval_artfid.py --sty ../data/sty_eval --cnt ../data/cnt_eval --tar ../out
 python eval_histogan.py --sty ../data/sty_eval --tar ../output
 ```
 
-## Citation
 
-If you use this frequency-enhanced version, please cite both the original StyleID paper and acknowledge our frequency enhancement:
-
-```BibTeX
-@InProceedings{Chung_2024_CVPR,
-    author    = {Chung, Jiwoo and Hyun, Sangeek and Heo, Jae-Pil},
-    title     = {Style Injection in Diffusion: A Training-free Approach for Adapting Large-scale Diffusion Models for Style Transfer},
-    booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
-    month     = {June},
-    year      = {2024},
-    pages     = {8795-8805}
-}
-
-# Also acknowledge the frequency enhancement extension
-```
 
 ## Acknowledgments
 
