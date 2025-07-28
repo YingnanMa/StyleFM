@@ -152,12 +152,10 @@ output_path/
 Use the same evaluation metrics as StyleID:
 
 ```bash
-# Art-FID
+# Art-LPIPS
 cd evaluation
-python eval_artfid.py --sty ../data/sty_eval --cnt ../data/cnt_eval --tar ../output
+python eval_artlpips.py --tar ../output
 
-# Histogram Loss
-python eval_histogan.py --sty ../data/sty_eval --tar ../output
 ```
 
 
