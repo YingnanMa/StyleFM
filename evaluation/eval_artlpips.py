@@ -3,19 +3,15 @@ import glob
 import numpy as np
 import os
 from PIL import Image
-from scipy import linalg
 import torch
-from sklearn.linear_model import LinearRegression
 from torchvision.transforms import Compose, Resize, CenterCrop, ToTensor, Normalize, Grayscale
 from tqdm import tqdm
 
 import utils
-import inception
 import image_metrics
 import lpips
 
 ALLOWED_IMAGE_EXTENSIONS = ['jpg', 'JPG', 'jpeg', 'JPEG', 'png', 'PNG']
-CKPT_URL = 'https://huggingface.co/matthias-wright/art_inception/resolve/main/art_inception.pth'
 
 
 class ImagePathDataset(torch.utils.data.Dataset):
@@ -32,122 +28,6 @@ class ImagePathDataset(torch.utils.data.Dataset):
         if self.transforms is not None:
             img = self.transforms(img)
         return img
-
-
-def get_activations(files, model, batch_size=50, device='cpu', num_workers=1):
-    """Computes the activations of for all images.
-
-    Args:
-        files (list): List of image file paths.
-        model (torch.nn.Module): Model for computing activations.
-        batch_size (int): Batch size for computing activations.
-        device (torch.device): Device for commputing activations.
-        num_workers (int): Number of threads for data loading.
-
-    Returns:
-        (): Activations of the images, shape [num_images, 2048].
-    """
-    model.eval()
-
-    if batch_size > len(files):
-        print(('Warning: batch size is bigger than the data size. '
-               'Setting batch size to data size'))
-        batch_size = len(files)
-
-    dataset = ImagePathDataset(files, transforms=Compose([Resize(512),ToTensor()]))
-    dataloader = torch.utils.data.DataLoader(dataset,
-                                             batch_size=batch_size,
-                                             shuffle=False,
-                                             drop_last=False,
-                                             num_workers=num_workers)
-
-    pred_arr = np.empty((len(files), 2048))
-
-    start_idx = 0
-
-    pbar = tqdm(total=len(files))
-    for batch in dataloader:
-        batch = batch.to(device)
-
-        with torch.no_grad():
-            features = model(batch, return_features=True)
-
-        features = features.cpu().numpy()
-        pred_arr[start_idx:start_idx + features.shape[0]] = features
-        start_idx = start_idx + features.shape[0]
-
-        pbar.update(batch.shape[0])
-
-    pbar.close()
-    return pred_arr
-
-
-def compute_frechet_distance(mu1, sigma1, mu2, sigma2, eps=1e-6):
-    """Numpy implementation of the Frechet Distance.
-    
-    Args:
-        mu1 (np.ndarray): Sample mean of activations of stylized images.
-        mu2 (np.ndarray): Sample mean of activations of style images.
-        sigma1 (np.ndarray): Covariance matrix of activations of stylized images.
-        sigma2 (np.ndarray): Covariance matrix of activations of style images.
-        eps (float): Epsilon for numerical stability.
-
-    Returns:
-        (float) FID value.
-    """
-
-    mu1 = np.atleast_1d(mu1)
-    mu2 = np.atleast_1d(mu2)
-
-    sigma1 = np.atleast_2d(sigma1)
-    sigma2 = np.atleast_2d(sigma2)
-
-    assert mu1.shape == mu2.shape, \
-        'Training and test mean vectors have different lengths'
-    assert sigma1.shape == sigma2.shape, \
-        'Training and test covariances have different dimensions'
-
-    diff = mu1 - mu2
-
-    # Product might be almost singular
-    covmean, _ = linalg.sqrtm(sigma1.dot(sigma2), disp=False)
-    if not np.isfinite(covmean).all():
-        msg = ('fid calculation produces singular product; '
-               'adding %s to diagonal of cov estimates') % eps
-        print(msg)
-        offset = np.eye(sigma1.shape[0]) * eps
-        covmean = linalg.sqrtm((sigma1 + offset).dot(sigma2 + offset))
-
-    # Numerical error might give slight imaginary component
-    if np.iscomplexobj(covmean):
-        if not np.allclose(np.diagonal(covmean).imag, 0, atol=1e-3):
-            m = np.max(np.abs(covmean.imag))
-            raise ValueError('Imaginary component {}'.format(m))
-        covmean = covmean.real
-
-    tr_covmean = np.trace(covmean)
-
-    return (diff.dot(diff) + np.trace(sigma1) + np.trace(sigma2) - 2 * tr_covmean)
-
-
-def compute_activation_statistics(files, model, batch_size=50, device='cpu', num_workers=1):
-    """Computes the activation statistics used by the FID.
-    
-    Args:
-        files (list): List of image file paths.
-        model (torch.nn.Module): Model for computing activations.
-        batch_size (int): Batch size for computing activations.
-        device (torch.device): Device for commputing activations.
-        num_workers (int): Number of threads for data loading.
-
-    Returns:
-        (np.ndarray, np.ndarray): mean of activations, covariance of activations
-        
-    """
-    act = get_activations(files, model, batch_size, device, num_workers)
-    mu = np.mean(act, axis=0)
-    sigma = np.cov(act, rowvar=False)
-    return mu, sigma
 
 
 def get_image_paths(path, sort=False):
@@ -168,108 +48,21 @@ def get_image_paths(path, sort=False):
         paths.sort()
     return paths
 
-def compute_fid(path_to_stylized, path_to_style, batch_size, device, num_workers=1):
-    """Computes the FID for the given paths.
-
-    Args:
-        path_to_stylized (str): Path to the stylized images.
-        path_to_style (str): Path to the style images.
-        batch_size (int): Batch size for computing activations.
-        device (str): Device for commputing activations.
-        num_workers (int): Number of threads for data loading.
-
-    Returns:
-        (float) FID value.
-    """
-    device = torch.device('cuda') if device == 'cuda' and torch.cuda.is_available() else torch.device('cpu')
-
-    ckpt_file = utils.download(CKPT_URL)
-    ckpt = torch.load(ckpt_file, map_location=device)
-    
-    model = inception.Inception3().to(device)
-    model.load_state_dict(ckpt, strict=False)
-    model.eval()
-    
-    stylized_image_paths = get_image_paths(path_to_stylized)
-    style_image_paths = get_image_paths(path_to_style)
-
-    mu1, sigma1 = compute_activation_statistics(stylized_image_paths, model, batch_size, device, num_workers)
-    mu2, sigma2 = compute_activation_statistics(style_image_paths, model, batch_size, device, num_workers)
-    
-    fid_value = compute_frechet_distance(mu1, sigma1, mu2, sigma2)
-    return fid_value
-
-
-def compute_fid_infinity(path_to_stylized, path_to_style, batch_size, device, num_points=15, num_workers=1):
-    """Computes the FID infinity for the given paths.
-
-    Args:
-        path_to_stylized (str): Path to the stylized images.
-        path_to_style (str): Path to the style images.
-        batch_size (int): Batch size for computing activations.
-        device (str): Device for commputing activations.
-        num_points (int): Number of FID_N we evaluate to fit a line.
-        num_workers (int): Number of threads for data loading.
-
-    Returns:
-        (float) FID infinity value.
-    """
-    device = torch.device('cuda') if device == 'cuda' and torch.cuda.is_available() else torch.device('cpu')
-
-    ckpt_file = utils.download(CKPT_URL)
-    ckpt = torch.load(ckpt_file, map_location=device)
-    
-    model = inception.Inception3().to(device)
-    model.load_state_dict(ckpt, strict=False)
-    model.eval()
-
-    stylized_image_paths = get_image_paths(path_to_stylized)
-    style_image_paths = get_image_paths(path_to_style)
-
-    assert len(stylized_image_paths) == len(style_image_paths), \
-           f'Number of stylized images and number of style images must be equal.({len(stylized_image_paths)},{len(style_image_paths)})'
-
-    activations_stylized = get_activations(stylized_image_paths, model, batch_size, device, num_workers)
-    activations_style = get_activations(style_image_paths, model, batch_size, device, num_workers)
-    activation_idcs = np.arange(activations_stylized.shape[0])
-
-    fids = []
-    
-    fid_batches = np.linspace(start=5000, stop=len(stylized_image_paths), num=num_points).astype('int32')
-    
-    for fid_batch_size in fid_batches:
-        np.random.shuffle(activation_idcs)
-        idcs = activation_idcs[:fid_batch_size]
-        
-        act_style_batch = activations_style[idcs]
-        act_stylized_batch = activations_stylized[idcs]
-
-        mu_style, sigma_style = np.mean(act_style_batch, axis=0), np.cov(act_style_batch, rowvar=False)
-        mu_stylized, sigma_stylized = np.mean(act_stylized_batch, axis=0), np.cov(act_stylized_batch, rowvar=False)
-        
-        fid_value = compute_frechet_distance(mu_style, sigma_style, mu_stylized, sigma_stylized)
-        fids.append(fid_value)
-
-    fids = np.array(fids).reshape(-1, 1)
-    reg = LinearRegression().fit(1 / fid_batches.reshape(-1, 1), fids)
-    fid_infinity = reg.predict(np.array([[0]]))[0,0]
-
-    return fid_infinity
-
 
 def compute_content_distance(path_to_stylized, path_to_content, batch_size, content_metric='squeeze', device='cuda', num_workers=1, gray=False):
     """Computes the distance for the given paths.
 
     Args:
         path_to_stylized (str): Path to the stylized images.
-        path_to_style (str): Path to the style images.
+        path_to_content (str): Path to the content images.
         batch_size (int): Batch size for computing activations.
-        content_metric (str): Metric to use for content distance. Choices: 'lpips', 'vgg', 'alexnet'
-        device (str): Device for commputing activations.
+        content_metric (str): Metric to use for content distance. Choices: 'lpips', 'vgg', 'alexnet', 'squeeze'
+        device (str): Device for computing activations.
         num_workers (int): Number of threads for data loading.
+        gray (bool): Whether to convert images to grayscale.
 
     Returns:
-        (float) FID value.
+        (float) Distance value.
     """
     device = torch.device('cuda') if device == 'cuda' and torch.cuda.is_available() else torch.device('cpu')
 
@@ -281,11 +74,9 @@ def compute_content_distance(path_to_stylized, path_to_content, batch_size, cont
            'Number of stylized images and number of content images must be equal.'
 
     if gray:
-        content_transforms = Compose([Resize(512), Grayscale(),
-        ToTensor()])
+        content_transforms = Compose([Resize(512), Grayscale(), ToTensor()])
     else:
-        content_transforms = Compose([Resize(512),
-        ToTensor()])
+        content_transforms = Compose([Resize(512), ToTensor()])
     
     dataset_stylized = ImagePathDataset(stylized_image_paths, transforms=content_transforms)
     dataloader_stylized = torch.utils.data.DataLoader(dataset_stylized,
@@ -328,19 +119,19 @@ def compute_content_distance(path_to_stylized, path_to_content, batch_size, cont
 
     return dist_sum / N
 
+
 def compute_patch_simi(path_to_stylized, path_to_content, batch_size, device, num_workers=1):
-    """Computes the distance for the given paths.
+    """Computes the patch similarity for the given paths.
 
     Args:
         path_to_stylized (str): Path to the stylized images.
-        path_to_style (str): Path to the style images.
+        path_to_content (str): Path to the content images.
         batch_size (int): Batch size for computing activations.
-        content_metric (str): Metric to use for content distance. Choices: 'lpips', 'vgg', 'alexnet'
-        device (str): Device for commputing activations.
+        device (str): Device for computing activations.
         num_workers (int): Number of threads for data loading.
 
     Returns:
-        (float) FID value.
+        (float) Patch similarity value.
     """
     device = torch.device('cuda') if device == 'cuda' and torch.cuda.is_available() else torch.device('cpu')
 
@@ -384,55 +175,6 @@ def compute_patch_simi(path_to_stylized, path_to_content, batch_size, device, nu
 
     return dist_sum / N
 
-def compute_art_fid(path_to_stylized, path_to_style, path_to_content, batch_size, device, mode='art_fid_inf', content_metric='vgg', num_workers=1):
-    """Computes the FID for the given paths.
-
-    Args:
-        path_to_stylized (str): Path to the stylized images.
-        path_to_style (str): Path to the style images.
-        path_to_content (str): Path to the content images.
-        batch_size (int): Batch size for computing activations.
-        device (str): Device for commputing activations.
-        content_metric (str): Metric to use for content distance. Choices: 'lpips', 'vgg', 'alexnet'
-        num_workers (int): Number of threads for data loading.
-
-    Returns:
-        (float) ArtFID value.
-    """
-    print('Compute FID (style, stylized)...')
-    if mode == 'art_fid_inf':
-        fid_value = compute_fid_infinity(path_to_stylized, path_to_style, batch_size, device, num_workers)
-    elif mode == 'art_fid':
-        fid_value = compute_fid(path_to_stylized, path_to_style, batch_size, device, num_workers)
-    elif mode == 'style_loss':
-        fid_value = compute_style_loss(path_to_stylized, path_to_style, batch_size, device, num_workers)
-    else:
-        fid_value = compute_gram_loss(path_to_stylized, path_to_style, batch_size, device, num_workers)
-    
-    # 添加：计算 FID(content, stylized)
-    print('Compute FID(content, stylized)...')
-    if mode == 'art_fid_inf':
-        fid_content_value = compute_fid_infinity(path_to_stylized, path_to_content, batch_size, device, num_workers)
-    else:
-        fid_content_value = compute_fid(path_to_stylized, path_to_content, batch_size, device, num_workers)
-    
-    print('Compute LPIPS (content, stylized)...')
-    cnt_value = compute_content_distance(path_to_stylized, path_to_content, batch_size, content_metric, device, num_workers)
-    gray_cnt_value = compute_content_distance(path_to_stylized, path_to_content, batch_size, content_metric, device, num_workers, gray=True)
-    
-    # 添加：计算 LPIPS(style, stylized)
-    print('Compute LPIPS(style, stylized)...')
-    style_lpips_value = compute_content_distance(path_to_stylized, path_to_style, batch_size, content_metric, device, num_workers)
-
-    art_fid_value = (cnt_value + 1) * (fid_value + 1)
-    
-    # 返回所有计算的值
-    return (art_fid_value.item(), 
-            fid_value.item(),  # FID(style, stylized)
-            cnt_value.item(),  # LPIPS(content, stylized)
-            gray_cnt_value.item(), 
-            fid_content_value.item(),  # 新增：FID(content, stylized)
-            style_lpips_value.item())  # 新增：LPIPS(style, stylized)
 
 def compute_cfsd(path_to_stylized, path_to_content, batch_size, device, num_workers=1):
     """Computes CFSD for the given paths.
@@ -441,7 +183,7 @@ def compute_cfsd(path_to_stylized, path_to_content, batch_size, device, num_work
         path_to_stylized (str): Path to the stylized images.
         path_to_content (str): Path to the content images.
         batch_size (int): Batch size for computing activations.
-        device (str): Device for commputing activations.
+        device (str): Device for computing activations.
         num_workers (int): Number of threads for data loading.
 
     Returns:
@@ -452,37 +194,20 @@ def compute_cfsd(path_to_stylized, path_to_content, batch_size, device, num_work
     simi_val = compute_patch_simi(path_to_stylized, path_to_content, 1, device, num_workers)
     simi_dist = f'{simi_val.item():.4f}'
     return simi_dist
-    
-def compute_stylevd_from_values(cfsd_value, lpips_style_value):
-    """Computes StyleVD from pre-calculated values.
-    
-    StyleVD = (1 + CFSD) × (1 + LPIPS(style, stylized))
-    
+
+
+def compute_artLpips(lpips_content_value, lpips_style_value):
+    """Computes ArtLPIPS metric.
+
     Args:
-        cfsd_value (float): Pre-calculated CFSD value
-        lpips_style_value (float): Pre-calculated LPIPS(style, stylized) value
-    
+        lpips_content_value (float): LPIPS value between content and stylized images.
+        lpips_style_value (float): LPIPS value between style and stylized images.
+
     Returns:
-        (float): StyleVD value
+        (float) ArtLPIPS value.
     """
-    # 确保是 float 类型
-    if isinstance(cfsd_value, str):
-        cfsd_value = float(cfsd_value)
-    
-    style_vd = (1 + cfsd_value) * (1 + lpips_style_value)
-    
-    print(f'\nStyleVD = (1 + {cfsd_value:.4f}) × (1 + {lpips_style_value:.4f}) = {style_vd:.4f}')
-    print('(Lower is better)')
-    
-    return style_vd
-
-def compute_artLpips(lpips_style_value, cnt_value):
-
-    artlpips = (1+lpips_style_value) * (1+cnt_value)
-    
-    print(f'\nArtLpips = (1 + {lpips_style_value:.4f}) × (1 + {cnt_value:.4f}) = {artlpips:.4f}')
-    print('(Lower is better)')
-    
+    artlpips = (1 + lpips_content_value) * (1 + lpips_style_value)
+        
     return artlpips
 
 
@@ -490,49 +215,31 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch_size', type=int, default=1, help='Batch size for computing activations.')
     parser.add_argument('--num_workers', type=int, default=8, help='Number of threads used for data loading.')
-    parser.add_argument('--content_metric', type=str, default='lpips', choices=['lpips', 'vgg', 'alexnet', 'ssim', 'ms-ssim'], help='Content distance.')
-    parser.add_argument('--mode', type=str, default='art_fid_inf', choices=['art_fid', 'art_fid_inf'], help='Evaluate ArtFID or ArtFID_infinity.')
+    parser.add_argument('--content_metric', type=str, default='lpips', choices=['lpips', 'vgg', 'alexnet', 'squeeze', 'ssim', 'ms-ssim'], help='Content distance metric.')
     parser.add_argument('--device', type=str, default='cuda', choices=['cuda', 'cpu'], help='Device to use.')
     parser.add_argument('--sty', type=str, default='../data/sty_eval', help='Path to style images.')
     parser.add_argument('--cnt', type=str, default='../data/cnt_eval', help='Path to content images.')
     parser.add_argument('--tar', type=str, required=True, help='Path to stylized images.')
     args = parser.parse_args()
 
-    artfid, fid, lpips, lpips_gray, fid_content, lpips_style_from_artfid = compute_art_fid(args.tar,
-                                                    args.sty,
-                                                    args.cnt,
-                                                    args.batch_size,
-                                                    args.device,
-                                                    args.mode,
-                                                    args.content_metric,
-                                                    args.num_workers)
+    print('Compute LPIPS (content, stylized)...')
+    lpips_content = compute_content_distance(args.tar, args.cnt, args.batch_size, args.content_metric, args.device, args.num_workers)
+       
+    print('Compute LPIPS (style, stylized)...')
+    lpips_style = compute_content_distance(args.tar, args.sty, args.batch_size, args.content_metric, args.device, args.num_workers)
 
-    cfsd = compute_cfsd(args.tar,
-                        args.cnt,
-                        args.batch_size,
-                        args.device,
-                        args.num_workers)
+    cfsd = compute_cfsd(args.tar, args.cnt, args.batch_size, args.device, args.num_workers)
 
-    # 使用已计算的值来计算 StyleVD
-    print('\n=== Computing StyleVD Metric ===')
-    print(f'Using pre-calculated values:')
-    print(f'  CFSD: {cfsd}')
-    print(f'  LPIPS(style, stylized): {lpips_style_from_artfid:.4f}')
-    
-    style_vd = compute_stylevd_from_values(float(cfsd), lpips_style_from_artfid)
-    artlpips = compute_artLpips(float(lpips),float(lpips_style_from_artfid))
+    artlpips = compute_artLpips(lpips_content.item(), lpips_style.item())
 
-    # 打印总结
+    # Print summary
     print('\n=== Evaluation Summary ===')
-    print(f'ArtFID: {artfid:.4f} [= ({lpips:.3f}+1) × ({fid:.3f}+1)]')
-    print(f'StyleVD: {style_vd:.4f} [= ({cfsd}+1) × ({lpips_style_from_artfid:.3f}+1)]')
     print(f'\nDetailed Metrics:')
-    print(f'  FID(style, stylized): {fid:.4f}')
-    print(f'  FID(content, stylized): {fid_content:.4f}')
-    print(f'  LPIPS(content, stylized): {lpips:.4f}')
-    print(f'  LPIPS_gray(content, stylized): {lpips_gray:.4f}')
-    print(f'  LPIPS(style, stylized): {lpips_style_from_artfid:.4f}')
+    print(f'  LPIPS(content, stylized): {lpips_content.item():.4f}')
+    print(f'  LPIPS(style, stylized): {lpips_style.item():.4f}')
     print(f'  CFSD: {cfsd}')
+    print(f'  ArtLPIPS: {artlpips:.4f}')
+
 
 if __name__ == '__main__':
     main()
