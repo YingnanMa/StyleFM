@@ -4,12 +4,12 @@
 
 ## Usage
 
-### Prerequisites
+## Prerequisites
 - Single GPU with 24GB+ VRAM
 - Python 3.8+
 - PyTorch 1.8.1+
 
-### Setup
+## Setup
 Our codebase is built on ([CompVis/stable-diffusion](https://github.com/CompVis/stable-diffusion), [Jiwoogit/StyleID](https://github.com/jiwoogit/StyleID/blob/main/README.md) and [MichalGeyer/plug-and-play](https://github.com/MichalGeyer/plug-and-play))
 and has similar dependencies and model architecture.
 
