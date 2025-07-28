@@ -1,6 +1,4 @@
-# Frequency-Enhanced Style Injection with Recursive Feature Mixing for Diffusion-Based Style Transfer
-
-### [Based on StyleID](https://github.com/jiwoogit/StyleID) / [Original Paper](https://arxiv.org/abs/2312.09008)
+# StyleFM
 
 ![imgs](asset/imgs.png)
 
