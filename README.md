@@ -7,7 +7,7 @@
 
 
 
-## Requirements
+## Usage
 
 ### Prerequisites
 - Single GPU with 20GB+ VRAM
