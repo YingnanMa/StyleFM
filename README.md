@@ -17,7 +17,7 @@ and has similar dependencies and model architecture.
 
 ```
 conda env create -f environment.yaml
-conda activate StyleID
+conda activate StyleFM
 ```
 
 ### Download StableDiffusion Weights
