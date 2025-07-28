@@ -31,10 +31,24 @@ ln -s <path/to/model.ckpt> models/ldm/stable-diffusion-v1/model.ckpt
 
 ## Run StyleFM
 
-### Basic Usage
-```bash
-python run_inference.py --cnt <content_dir> --sty <style_dir> # for default result run python run_inference.py
+For running StyleFM, run:
+
 ```
+python run_inference.py --cnt <content_img_dir> --sty <style_img_dir>
+```
+
+For running default configuration in sample image files, run:
+```
+python run_inference.py --cnt data/cnt --sty data/sty  # default
+```
+
+To fine-tune the parameters, you have control over the following aspects in the style transfer:
+
+- **Attention-based style injection** is removed by the `--without_attn_injection` parameter.
+- **Query preservation** is controlled by the `--gamma` parameter.
+  (A higher value enhances content fidelity but may result a lack of style fidelity).
+- **Attention temperature scaling** is controlled through the `--T` parameter.
+- **Initial latent AdaIN** is removed by the `--without_init_adain` parameter.
 
 ## Evaluation
 
