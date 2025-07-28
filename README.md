@@ -36,7 +36,7 @@ ln -s <path/to/model.ckpt> models/ldm/stable-diffusion-v1/model.ckpt
 pip install -r requirements.txt
 ```
 
-## Run Frequency-Enhanced StyleID
+## Run StyleFM
 
 ### Basic Usage
 ```bash
