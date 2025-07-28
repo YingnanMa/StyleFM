@@ -43,14 +43,6 @@ pip install -r requirements.txt
 python run_inference.py --cnt <content_dir> --sty <style_dir>
 ```
 
-## Output Structure
-```
-output_path/
-├── content1_stylized_style1.png
-├── content1_stylized_style2.png
-├── ...
-```
-
 ## Evaluation
 
 
