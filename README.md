@@ -54,7 +54,19 @@ output_path/
 
 ## Evaluation
 
-Use the same evaluation metrics as StyleID:
+
+For a quantitative evaluation, we incorporate a set of randomly selected inputs from [MS-COCO](https://cocodataset.org) and [WikiArt](https://github.com/cs-chan/ArtGAN/tree/master/WikiArt%20Dataset) in "./data" directory.
+
+
+Before executing evalution code, please duplicate the content and style images to match the number of stylized images first. (40 styles, 20 contents -> 800 style images, 800 content images)
+
+run:
+```
+python util/copy_inputs.py --cnt data/cnt --sty data/sty
+```
+
+We largely employ [matthias-wright/art-fid](https://github.com/matthias-wright/art-fid) and [mahmoudnafifi/HistoGAN](https://github.com/mahmoudnafifi/HistoGAN) for our evaluation.
+
 
 ```bash
 # Art-LPIPS
