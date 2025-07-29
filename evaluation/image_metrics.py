@@ -5,10 +5,6 @@ import torch.nn.functional as F
 import torchvision.transforms as transforms
 import torchvision.models as models
 
-# Note: These imports are commented out as they're not used in the current implementation
-# If SSIM/MS-SSIM are implemented elsewhere, uncomment and ensure proper import
-# from .ssim import SSIM, MS_SSIM
-
 
 def normalize(x):
     """Normalize input tensor using ImageNet statistics."""
