@@ -2,7 +2,7 @@
 
 
 ### Prerequisites
-- Single V100 GPU
+- NVIDIA V100 GPU
 - Python 3.8+
 - PyTorch 1.8.1+
 
