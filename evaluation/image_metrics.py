@@ -6,43 +6,6 @@ import torchvision.transforms as transforms
 import torchvision.models as models
 
 
-def normalize(x):
-    """Normalize input tensor using ImageNet statistics."""
-    mean = torch.tensor([0.485, 0.456, 0.406], device=x.device).reshape(1, -1, 1, 1)
-    std = torch.tensor([0.229, 0.224, 0.225], device=x.device).reshape(1, -1, 1, 1)
-    x = (x - mean) / std
-    return x
-
-
-class Metric(nn.Module):
-    """Generic metric class for VGG, AlexNet, SSIM, and MS-SSIM metrics."""
-    
-    def __init__(self, metric_type='vgg'):
-        super(Metric, self).__init__()
-        self.metric_type = metric_type
-        
-        
-        if metric_type == 'alexnet':
-            self.model = lpips.pn.alexnet()
-        else:
-            raise ValueError(f'Invalid metric type: {metric_type}')
-
-    def forward(self, x, y):
-        """Compute distance between two images."""
-        if self.metric_type in ['ssim', 'ms-ssim']:
-            dist = self.model(x, y)
-            return dist
-        else:
-            # For VGG and AlexNet
-            features_x = self.model(normalize(x))._asdict()
-            features_y = self.model(normalize(y))._asdict()
-            
-            dist = 0.0
-            for layer in features_x.keys():
-                dist += torch.mean(torch.square(features_x[layer] - features_y[layer]), dim=(1, 2, 3))
-            return dist / len(features_x)
-
-
 class LPIPS(nn.Module):
     """LPIPS metric using AlexNet backbone."""
     
@@ -51,21 +14,16 @@ class LPIPS(nn.Module):
         self.dist = lpips.LPIPS(net='alex')
 
     def forward(self, x, y):
-        """Compute LPIPS distance. Images must be in range [0, 1]."""
-        # Convert from [0, 1] to [-1, 1] as required by LPIPS
-        dist = self.dist(2 * x - 1, 2 * y - 1)
-        return dist
-
-
-class LPIPS_vgg(nn.Module):
-    """LPIPS metric using VGG backbone."""
-    
-    def __init__(self):
-        super(LPIPS_vgg, self).__init__()
-        self.dist = lpips.LPIPS(net='vgg')
-
-    def forward(self, x, y):
-        """Compute LPIPS distance. Images must be in range [0, 1]."""
+        """
+        Compute LPIPS distance between two images.
+        
+        Args:
+            x: First image tensor, should be in range [0, 1]
+            y: Second image tensor, should be in range [0, 1]
+            
+        Returns:
+            LPIPS distance value
+        """
         # Convert from [0, 1] to [-1, 1] as required by LPIPS
         dist = self.dist(2 * x - 1, 2 * y - 1)
         return dist
@@ -78,7 +36,6 @@ class PatchSimi(nn.Module):
         super(PatchSimi, self).__init__()
         self.device = device
         
-        # Load pre-trained VGG19 and extract features
         self.model = models.vgg19(pretrained=True).features.to(device).eval()
         
         # Use conv3 layer for patch similarity
@@ -87,9 +44,6 @@ class PatchSimi(nn.Module):
         # ImageNet normalization parameters
         self.norm_mean = (0.485, 0.456, 0.406)
         self.norm_std = (0.229, 0.224, 0.225)
-        
-        # KL divergence loss
-        self.kld = nn.KLDivLoss(reduction='batchmean')
 
     def get_feats(self, img):
         """Extract features from specified layers."""
@@ -123,7 +77,16 @@ class PatchSimi(nn.Module):
         return patch_simi.reshape(b, -1)
 
     def forward(self, input, target):
-        """Compute patch similarity distance between input and target."""
+        """
+        Compute patch similarity distance between input and target.
+        
+        Args:
+            input: Input image tensor
+            target: Target image tensor
+            
+        Returns:
+            Patch similarity distance (KL divergence)
+        """
         src_feats = self.get_feats(self.normalize(input))
         target_feats = self.get_feats(self.normalize(target))
         
@@ -135,3 +98,16 @@ class PatchSimi(nn.Module):
                 reduction='batchmean'
             )
         return init_loss
+
+
+class Metric(nn.Module):
+    """Legacy metric class for AlexNet - redirects to LPIPS."""
+    
+    def __init__(self, metric_type='alexnet'):
+        super(Metric, self).__init__()
+        if metric_type != 'alexnet':
+            raise ValueError(f'Only alexnet is supported, got: {metric_type}')
+        self.metric = LPIPS()
+    
+    def forward(self, x, y):
+        return self.metric(x, y)
