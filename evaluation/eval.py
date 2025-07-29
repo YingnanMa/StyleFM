@@ -15,61 +15,6 @@ import lpips
 ALLOWED_IMAGE_EXTENSIONS = ['jpg', 'JPG', 'jpeg', 'JPEG', 'png', 'PNG']
 
 
-def download(url, ckpt_dir=None):
-    """Download a file from URL with progress bar and caching.
-    
-    Args:
-        url (str): URL to download from
-        ckpt_dir (str, optional): Directory to save the file. Defaults to temp directory.
-    
-    Returns:
-        str: Path to the downloaded file
-    """
-    name = url[url.rfind('/') + 1:]
-    if ckpt_dir is None:
-        ckpt_dir = tempfile.gettempdir()
-    ckpt_dir = os.path.join(ckpt_dir, 'evaluation_models')  
-    ckpt_file = os.path.join(ckpt_dir, name)
-    
-    if not os.path.exists(ckpt_file):
-        print(f'Downloading: \"{url[:url.rfind("?") if "?" in url else None]}\" to {ckpt_file}')
-        if not os.path.exists(ckpt_dir): 
-            os.makedirs(ckpt_dir)
-        
-        response = requests.get(url, stream=True)
-        total_size_in_bytes = int(response.headers.get('content-length', 0))
-        progress_bar = tqdm(total=total_size_in_bytes, unit='iB', unit_scale=True)
-        
-        # Create temp file first (in case download fails)
-        ckpt_file_temp = os.path.join(ckpt_dir, name + '.temp')
-        try:
-            with open(ckpt_file_temp, 'wb') as file:
-                for data in response.iter_content(chunk_size=1024):
-                    progress_bar.update(len(data))
-                    file.write(data)
-            progress_bar.close()
-            
-            # Verify download completed successfully
-            if total_size_in_bytes != 0 and progress_bar.n != total_size_in_bytes:
-                print('An error occurred while downloading, please try again.')
-                if os.path.exists(ckpt_file_temp):
-                    os.remove(ckpt_file_temp)
-                raise Exception("Download incomplete")
-            else:
-                # Rename temp file to final name
-                os.rename(ckpt_file_temp, ckpt_file)
-                print(f'Successfully downloaded to {ckpt_file}')
-        except Exception as e:
-            # Clean up temp file on any error
-            if os.path.exists(ckpt_file_temp):
-                os.remove(ckpt_file_temp)
-            raise e
-    else:
-        print(f'File already exists: {ckpt_file}')
-    
-    return ckpt_file
-
-
 class ImagePathDataset(torch.utils.data.Dataset):
     def __init__(self, files, transforms=None):
         self.files = files
