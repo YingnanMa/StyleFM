@@ -58,7 +58,6 @@ python util/copy_inputs.py --cnt data/cnt --sty data/sty
 For running the evaluation:
 
 ```bash
-# Art-LPIPS
 cd evaluation
 python eval.py --tar ../output
 
