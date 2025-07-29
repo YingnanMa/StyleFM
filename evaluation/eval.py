@@ -112,14 +112,14 @@ def get_image_paths(path, sort=False):
     return paths
 
 
-def compute_content_distance(path_to_stylized, path_to_content, batch_size, content_metric='lpips', device='cuda', num_workers=1, gray=False):
+def compute_lpips_distance(path_to_stylized, path_to_target, batch_size, eval_metric='lpips', device='cuda', num_workers=1, gray=False):
     """Computes the distance for the given paths.
 
     Args:
         path_to_stylized (str): Path to the stylized images.
-        path_to_content (str): Path to the content images.
+        path_to_target (str): Path to the content/style images.
         batch_size (int): Batch size for computing activations.
-        content_metric (str): Metric to use for content distance. Currently only 'lpips' is supported.
+        eval_metric (str): Metric to use for content distance. Currently only 'lpips' is supported.
         device (str): Device for computing activations.
         num_workers (int): Number of threads for data loading.
         gray (bool): Whether to convert images to grayscale.
@@ -131,42 +131,39 @@ def compute_content_distance(path_to_stylized, path_to_content, batch_size, cont
 
     # Sort paths in order to match up the stylized images with the corresponding content image
     stylized_image_paths = get_image_paths(path_to_stylized, sort=True)
-    content_image_paths = get_image_paths(path_to_content, sort=True)
+    target_image_paths = get_image_paths(path_to_target, sort=True)
 
-    assert len(stylized_image_paths) == len(content_image_paths), \
-           'Number of stylized images and number of content images must be equal.'
+    assert len(stylized_image_paths) == len(target_image_paths), \
+           'Number of stylized images and number of target images must be equal.'
 
     if gray:
-        content_transforms = Compose([Resize(512), Grayscale(), ToTensor()])
+        target_transforms = Compose([Resize(512), Grayscale(), ToTensor()])
     else:
-        content_transforms = Compose([Resize(512), ToTensor()])
+        target_transforms = Compose([Resize(512), ToTensor()])
     
-    dataset_stylized = ImagePathDataset(stylized_image_paths, transforms=content_transforms)
+    dataset_stylized = ImagePathDataset(stylized_image_paths, transforms=target_transforms)
     dataloader_stylized = torch.utils.data.DataLoader(dataset_stylized,
                                                       batch_size=batch_size,
                                                       shuffle=False,
                                                       drop_last=False,
                                                       num_workers=num_workers)
 
-    dataset_content = ImagePathDataset(content_image_paths, transforms=content_transforms)
-    dataloader_content = torch.utils.data.DataLoader(dataset_content,
+    dataset_target = ImagePathDataset(target_image_paths, transforms=target_transforms)
+    dataloader_target = torch.utils.data.DataLoader(dataset_target,
                                                      batch_size=batch_size,
                                                      shuffle=False,
                                                      drop_last=False,
                                                      num_workers=num_workers)
     
-    # Since we only support LPIPS now
-    if content_metric != 'lpips':
-        raise ValueError(f'Only lpips metric is supported, got: {content_metric}')
     
     metric = image_metrics.LPIPS().to(device)
 
     dist_sum = 0.0
     N = 0
     pbar = tqdm(total=len(stylized_image_paths))
-    for batch_stylized, batch_content in zip(dataloader_stylized, dataloader_content):
+    for batch_stylized, batch_target in zip(dataloader_stylized, dataloader_target):
         with torch.no_grad():
-            batch_dist = metric(batch_stylized.to(device), batch_content.to(device))
+            batch_dist = metric(batch_stylized.to(device), batch_target.to(device))
             N += batch_stylized.shape[0]
             dist_sum += torch.sum(batch_dist)
 
@@ -286,10 +283,10 @@ def main():
     
 
     print('Compute LPIPS (content, stylized)...')
-    lpips_content = compute_content_distance(args.tar, args.cnt, args.batch_size, 'lpips', device.type, args.num_workers)
+    lpips_content = compute_lpips_distance(args.tar, args.cnt, args.batch_size, 'lpips', device.type, args.num_workers)
        
     print('Compute LPIPS (style, stylized)...')
-    lpips_style = compute_content_distance(args.tar, args.sty, args.batch_size, 'lpips', device.type, args.num_workers)
+    lpips_style = compute_lpips_distance(args.tar, args.sty, args.batch_size, 'lpips', device.type, args.num_workers)
 
     cfsd = compute_cfsd(args.tar, args.cnt, device.type, args.num_workers)
 
