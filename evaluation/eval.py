@@ -6,12 +6,68 @@ from PIL import Image
 import torch
 from torchvision.transforms import Compose, Resize, CenterCrop, ToTensor, Normalize, Grayscale
 from tqdm import tqdm
+import requests
+import tempfile
 
-import utils
 import image_metrics
 import lpips
 
 ALLOWED_IMAGE_EXTENSIONS = ['jpg', 'JPG', 'jpeg', 'JPEG', 'png', 'PNG']
+
+
+def download(url, ckpt_dir=None):
+    """Download a file from URL with progress bar and caching.
+    
+    Args:
+        url (str): URL to download from
+        ckpt_dir (str, optional): Directory to save the file. Defaults to temp directory.
+    
+    Returns:
+        str: Path to the downloaded file
+    """
+    name = url[url.rfind('/') + 1:]
+    if ckpt_dir is None:
+        ckpt_dir = tempfile.gettempdir()
+    ckpt_dir = os.path.join(ckpt_dir, 'evaluation_models')  
+    ckpt_file = os.path.join(ckpt_dir, name)
+    
+    if not os.path.exists(ckpt_file):
+        print(f'Downloading: \"{url[:url.rfind("?") if "?" in url else None]}\" to {ckpt_file}')
+        if not os.path.exists(ckpt_dir): 
+            os.makedirs(ckpt_dir)
+        
+        response = requests.get(url, stream=True)
+        total_size_in_bytes = int(response.headers.get('content-length', 0))
+        progress_bar = tqdm(total=total_size_in_bytes, unit='iB', unit_scale=True)
+        
+        # Create temp file first (in case download fails)
+        ckpt_file_temp = os.path.join(ckpt_dir, name + '.temp')
+        try:
+            with open(ckpt_file_temp, 'wb') as file:
+                for data in response.iter_content(chunk_size=1024):
+                    progress_bar.update(len(data))
+                    file.write(data)
+            progress_bar.close()
+            
+            # Verify download completed successfully
+            if total_size_in_bytes != 0 and progress_bar.n != total_size_in_bytes:
+                print('An error occurred while downloading, please try again.')
+                if os.path.exists(ckpt_file_temp):
+                    os.remove(ckpt_file_temp)
+                raise Exception("Download incomplete")
+            else:
+                # Rename temp file to final name
+                os.rename(ckpt_file_temp, ckpt_file)
+                print(f'Successfully downloaded to {ckpt_file}')
+        except Exception as e:
+            # Clean up temp file on any error
+            if os.path.exists(ckpt_file_temp):
+                os.remove(ckpt_file_temp)
+            raise e
+    else:
+        print(f'File already exists: {ckpt_file}')
+    
+    return ckpt_file
 
 
 class ImagePathDataset(torch.utils.data.Dataset):
@@ -41,9 +97,16 @@ def get_image_paths(path, sort=False):
         (list): List of image paths with allowed file extensions.
 
     """
+    if not os.path.exists(path):
+        raise ValueError(f"Path does not exist: {path}")
+    
     paths = []
     for extension in ALLOWED_IMAGE_EXTENSIONS:
         paths.extend(glob.glob(os.path.join(path, f'*.{extension}')))
+    
+    if not paths:
+        raise ValueError(f"No images found in {path} with extensions {ALLOWED_IMAGE_EXTENSIONS}")
+    
     if sort:
         paths.sort()
     return paths
@@ -56,7 +119,7 @@ def compute_content_distance(path_to_stylized, path_to_content, batch_size, cont
         path_to_stylized (str): Path to the stylized images.
         path_to_content (str): Path to the content images.
         batch_size (int): Batch size for computing activations.
-        content_metric (str): Metric to use for content distance. Choices: 'lpips',
+        content_metric (str): Metric to use for content distance. Currently only 'lpips' is supported.
         device (str): Device for computing activations.
         num_workers (int): Number of threads for data loading.
         gray (bool): Whether to convert images to grayscale.
@@ -92,13 +155,11 @@ def compute_content_distance(path_to_stylized, path_to_content, batch_size, cont
                                                      drop_last=False,
                                                      num_workers=num_workers)
     
-    metric_list = ['alexnet']
-    if content_metric in metric_list:
-        metric = image_metrics.Metric(content_metric).to(device)
-    elif content_metric == 'lpips':
-        metric = image_metrics.LPIPS().to(device)
-    else:
-        raise ValueError(f'Invalid content metric: {content_metric}')
+    # Since we only support LPIPS now
+    if content_metric != 'lpips':
+        raise ValueError(f'Only lpips metric is supported, got: {content_metric}')
+    
+    metric = image_metrics.LPIPS().to(device)
 
     dist_sum = 0.0
     N = 0
@@ -172,21 +233,23 @@ def compute_patch_simi(path_to_stylized, path_to_content, batch_size, device, nu
     return dist_sum / N
 
 
-def compute_cfsd(path_to_stylized, path_to_content, batch_size, device, num_workers=1):
+def compute_cfsd(path_to_stylized, path_to_content, device, num_workers=1):
     """Computes CFSD for the given paths.
+    
+    Note: This function always uses batch_size=1 for patch similarity computation.
 
     Args:
         path_to_stylized (str): Path to the stylized images.
         path_to_content (str): Path to the content images.
-        batch_size (int): Batch size for computing activations.
         device (str): Device for computing activations.
         num_workers (int): Number of threads for data loading.
 
     Returns:
-        (float) CFSD value.
+        (str) CFSD value formatted as string.
     """
     print('Compute CFSD value...')
-
+    
+    # Always use batch_size=1 for patch similarity
     simi_val = compute_patch_simi(path_to_stylized, path_to_content, 1, device, num_workers)
     simi_dist = f'{simi_val.item():.4f}'
     return simi_dist
@@ -203,7 +266,6 @@ def compute_artLpips(lpips_content_value, lpips_style_value):
         (float) ArtLPIPS value.
     """
     artlpips = (1 + lpips_content_value) * (1 + lpips_style_value)
-        
     return artlpips
 
 
@@ -211,20 +273,25 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch_size', type=int, default=1, help='Batch size for computing activations.')
     parser.add_argument('--num_workers', type=int, default=8, help='Number of threads used for data loading.')
-    parser.add_argument('--content_metric', type=str, default='lpips', choices=['lpips'], help='Content distance metric.')
     parser.add_argument('--device', type=str, default='cuda', choices=['cuda', 'cpu'], help='Device to use.')
     parser.add_argument('--sty', type=str, default='../data/sty_eval', help='Path to style images.')
     parser.add_argument('--cnt', type=str, default='../data/cnt_eval', help='Path to content images.')
-    parser.add_argument('--tar', type=str, required=True, help='Path to stylized images.')
+    parser.add_argument('--tar', type=str, required=True, help='Path to stylized images.')    
     args = parser.parse_args()
+    
+    # Handle device
+    device = torch.device('cuda' if args.device == 'cuda' and torch.cuda.is_available() else 'cpu')
+    if device.type == 'cpu' and args.device == 'cuda':
+        print("Warning: CUDA requested but not available, using CPU")
+    
 
     print('Compute LPIPS (content, stylized)...')
-    lpips_content = compute_content_distance(args.tar, args.cnt, args.batch_size, args.content_metric, args.device, args.num_workers)
+    lpips_content = compute_content_distance(args.tar, args.cnt, args.batch_size, 'lpips', device.type, args.num_workers)
        
     print('Compute LPIPS (style, stylized)...')
-    lpips_style = compute_content_distance(args.tar, args.sty, args.batch_size, args.content_metric, args.device, args.num_workers)
+    lpips_style = compute_content_distance(args.tar, args.sty, args.batch_size, 'lpips', device.type, args.num_workers)
 
-    cfsd = compute_cfsd(args.tar, args.cnt, args.batch_size, args.device, args.num_workers)
+    cfsd = compute_cfsd(args.tar, args.cnt, device.type, args.num_workers)
 
     artlpips = compute_artLpips(lpips_content.item(), lpips_style.item())
 
