@@ -49,14 +49,14 @@ def get_image_paths(path, sort=False):
     return paths
 
 
-def compute_content_distance(path_to_stylized, path_to_content, batch_size, content_metric='squeeze', device='cuda', num_workers=1, gray=False):
+def compute_content_distance(path_to_stylized, path_to_content, batch_size, content_metric='lpips', device='cuda', num_workers=1, gray=False):
     """Computes the distance for the given paths.
 
     Args:
         path_to_stylized (str): Path to the stylized images.
         path_to_content (str): Path to the content images.
         batch_size (int): Batch size for computing activations.
-        content_metric (str): Metric to use for content distance. Choices: 'lpips', 'vgg', 'alexnet', 'squeeze'
+        content_metric (str): Metric to use for content distance. Choices: 'lpips',
         device (str): Device for computing activations.
         num_workers (int): Number of threads for data loading.
         gray (bool): Whether to convert images to grayscale.
@@ -92,15 +92,11 @@ def compute_content_distance(path_to_stylized, path_to_content, batch_size, cont
                                                      drop_last=False,
                                                      num_workers=num_workers)
     
-    metric_list = ['alexnet', 'ssim', 'ms-ssim']
+    metric_list = ['alexnet']
     if content_metric in metric_list:
         metric = image_metrics.Metric(content_metric).to(device)
     elif content_metric == 'lpips':
         metric = image_metrics.LPIPS().to(device)
-    elif content_metric == 'vgg':
-        metric = image_metrics.LPIPS_vgg().to(device)
-    elif content_metric == 'squeeze':
-        metric = lpips.LPIPS(net='squeeze').to(device)
     else:
         raise ValueError(f'Invalid content metric: {content_metric}')
 
@@ -215,7 +211,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch_size', type=int, default=1, help='Batch size for computing activations.')
     parser.add_argument('--num_workers', type=int, default=8, help='Number of threads used for data loading.')
-    parser.add_argument('--content_metric', type=str, default='lpips', choices=['lpips', 'vgg', 'alexnet', 'squeeze', 'ssim', 'ms-ssim'], help='Content distance metric.')
+    parser.add_argument('--content_metric', type=str, default='lpips', choices=['lpips'], help='Content distance metric.')
     parser.add_argument('--device', type=str, default='cuda', choices=['cuda', 'cpu'], help='Device to use.')
     parser.add_argument('--sty', type=str, default='../data/sty_eval', help='Path to style images.')
     parser.add_argument('--cnt', type=str, default='../data/cnt_eval', help='Path to content images.')
