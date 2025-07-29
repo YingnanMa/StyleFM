@@ -28,7 +28,7 @@ class LPIPS(nn.Module):
         dist = self.dist(2 * x - 1, 2 * y - 1)
         return dist
 
-
+#cfsd function obtained from StyleID
 class PatchSimi(nn.Module):
     """Patch similarity metric for content feature similarity distance (CFSD)."""
     
