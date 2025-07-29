@@ -118,7 +118,7 @@ def compute_lpips_distance(path_to_stylized, path_to_target, batch_size, eval_me
 
     return dist_sum / N
 
-
+#cfsd function obtained from StyleID
 def compute_patch_simi(path_to_stylized, path_to_content, batch_size, device, num_workers=1):
     """Computes the patch similarity for the given paths.
 
@@ -174,7 +174,7 @@ def compute_patch_simi(path_to_stylized, path_to_content, batch_size, device, nu
 
     return dist_sum / N
 
-
+#cfsd function obtained from StyleID
 def compute_cfsd(path_to_stylized, path_to_content, device, num_workers=1):
     """Computes CFSD for the given paths.
     
