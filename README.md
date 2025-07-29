@@ -60,7 +60,7 @@ For running the evaluation:
 ```bash
 # Art-LPIPS
 cd evaluation
-python eval_artlpips.py --tar ../output
+python eval.py --tar ../output
 
 ```
 
