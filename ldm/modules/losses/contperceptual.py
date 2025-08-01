@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 from taming.modules.losses.vqperceptual import *  # TODO: taming dependency yes/no?
-
+'''This code is from stable-diffusion => https://github.com/CompVis/stable-diffusion'''
 
 class LPIPSWithDiscriminator(nn.Module):
     def __init__(self, disc_start, logvar_init=0.0, kl_weight=1.0, pixelloss_weight=1.0,
