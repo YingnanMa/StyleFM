@@ -1,5 +1,5 @@
 import numpy as np
-
+'''This code is modified from freeinit => https://github.com/jiwoogit/StyleID'''
 
 class LambdaWarmUpCosineScheduler:
     """
