@@ -22,6 +22,7 @@ from util.frequency_util import gaussian_high_pass_filter, gaussian_midhigh_pass
 
 feat_maps = []
 
+#This function obtained from StyleID
 def save_img_from_sample(model, samples_ddim, fname):
     x_samples_ddim = model.decode_first_stage(samples_ddim)
     x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
@@ -265,7 +266,7 @@ def load_img(path):
     image = torch.from_numpy(image)
     return 2.*image - 1.
 
-
+#This function obtained from StyleID
 def adain(cnt_feat, sty_feat):
     cnt_mean = cnt_feat.mean(dim=[0, 2, 3],keepdim=True)
     cnt_std = cnt_feat.std(dim=[0, 2, 3],keepdim=True)
@@ -274,7 +275,7 @@ def adain(cnt_feat, sty_feat):
     output = ((cnt_feat-cnt_mean)/cnt_std)*sty_std + sty_mean
     return output
 
-
+#This function obtained from StyleID
 def load_model_from_config(config, ckpt, verbose=False):
     print(f"Loading model from {ckpt}")
     pl_sd = torch.load(ckpt, map_location="cpu")
