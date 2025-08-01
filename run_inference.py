@@ -275,7 +275,7 @@ def adain(cnt_feat, sty_feat):
     output = ((cnt_feat-cnt_mean)/cnt_std)*sty_std + sty_mean
     return output
 
-#This function obtained from StyleID
+#This function obtained from plug-and-play
 def load_model_from_config(config, ckpt, verbose=False):
     print(f"Loading model from {ckpt}")
     pl_sd = torch.load(ckpt, map_location="cpu")
@@ -380,7 +380,8 @@ def main():
     feat_maps = [{'config': {
                 'T':opt.T
                 }} for _ in range(50)]
-
+    
+    #This function obtained from StyleID
     def ddim_sampler_callback(pred_x0, xt, i):
         save_feature_maps_callback(i)
         save_feature_map(xt, 'z_enc', i)
