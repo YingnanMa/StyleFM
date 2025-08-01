@@ -385,7 +385,8 @@ def main():
     def ddim_sampler_callback(pred_x0, xt, i):
         save_feature_maps_callback(i)
         save_feature_map(xt, 'z_enc', i)
-
+        
+    #This function obtained from StyleID
     def save_feature_maps(blocks, i, feature_type="input_block"):
         block_idx = 0
         for block_idx, block in enumerate(blocks):
@@ -399,10 +400,12 @@ def main():
                     save_feature_map(k, f"{feature_type}_{block_idx}_self_attn_k", i)
                     save_feature_map(v, f"{feature_type}_{block_idx}_self_attn_v", i)
             block_idx += 1
-
+            
+    #This function obtained from StyleID
     def save_feature_maps_callback(i):
         save_feature_maps(unet_model.output_blocks , i, "output_block")
-
+        
+    #This function obtained from StyleID
     def save_feature_map(feature_map, filename, time):
         global feat_maps
         cur_idx = idx_time_dict[time]
