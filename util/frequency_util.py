@@ -3,7 +3,7 @@ import torch.fft as fft
 import math
 import pdb
 
-'''This code is from freeinit => https://github.com/TianxingWu/FreeInit'''
+'''Low pass filter code is from freeinit => https://github.com/TianxingWu/FreeInit'''
 
 def gaussian_low_pass_filter(shape, d_s=0.3, d_t=0.3):
     """
@@ -27,7 +27,7 @@ def gaussian_low_pass_filter(shape, d_s=0.3, d_t=0.3):
     
 def gaussian_lowmid_pass_filter(shape, d_s=0.7, d_t=0.3):
     """
-    Compute the gaussian low pass filter mask.
+    Compute the gaussian low-mid pass filter mask.
 
     Args:
         shape: shape of the filter (volume)
@@ -47,7 +47,7 @@ def gaussian_lowmid_pass_filter(shape, d_s=0.7, d_t=0.3):
     
 def gaussian_midhigh_pass_filter(shape, d_s=0.3, d_t=0.3):
     """
-    Compute the gaussian low pass filter mask.
+    Compute the gaussian mid-high pass filter mask.
 
     Args:
         shape: shape of the filter (volume)
@@ -67,7 +67,7 @@ def gaussian_midhigh_pass_filter(shape, d_s=0.3, d_t=0.3):
     
 def gaussian_high_pass_filter(shape, d_s=0.7, d_t=0.3):
     """
-    Compute the gaussian low pass filter mask.
+    Compute the gaussian high pass filter mask.
 
     Args:
         shape: shape of the filter (volume)
