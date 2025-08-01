@@ -19,6 +19,8 @@ from ldm.modules.diffusionmodules.util import (
 )
 from ldm.modules.attention import SpatialTransformer
 
+'''This code is from StyleID => https://github.com/jiwoogit/StyleID'''
+
 
 # dummy replace
 def convert_module_to_f16(x):
