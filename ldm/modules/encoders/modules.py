@@ -8,6 +8,7 @@ import kornia
 
 from ldm.modules.x_transformer import Encoder, TransformerWrapper  # TODO: can we directly rely on lucidrains code and simply add this as a reuirement? --> test
 
+'''This code is from stable-diffusion => https://github.com/CompVis/stable-diffusion'''
 
 class AbstractEncoder(nn.Module):
     def __init__(self):
