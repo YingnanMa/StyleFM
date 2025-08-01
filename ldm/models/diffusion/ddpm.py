@@ -6,6 +6,8 @@ https://github.com/CompVis/taming-transformers
 -- merci
 """
 
+'''This code is from StyleID => https://github.com/jiwoogit/StyleID'''
+
 import torch
 import torch.nn as nn
 import numpy as np
