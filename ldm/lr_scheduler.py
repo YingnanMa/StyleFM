@@ -1,5 +1,5 @@
 import numpy as np
-'''This code is from StyleID => https://github.com/jiwoogit/StyleID'''
+'''This code is from stable-diffusion => https://github.com/CompVis/stable-diffusion'''
 
 class LambdaWarmUpCosineScheduler:
     """
