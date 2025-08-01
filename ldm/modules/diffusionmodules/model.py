@@ -7,7 +7,7 @@ from einops import rearrange
 
 from ldm.util import instantiate_from_config
 from ldm.modules.attention import LinearAttention
-
+'''This code is from StyleID => https://github.com/jiwoogit/StyleID'''
 
 def get_timestep_embedding(timesteps, embedding_dim):
     """
