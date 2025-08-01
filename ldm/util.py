@@ -13,7 +13,7 @@ from queue import Queue
 from inspect import isfunction
 from PIL import Image, ImageDraw, ImageFont
 
-'''This code is from freeinit => https://github.com/jiwoogit/StyleID'''
+'''This code is from StyleID => https://github.com/jiwoogit/StyleID'''
 
 def log_txt_as_img(wh, xc, size=10):
     # wh a tuple of (width, height)
