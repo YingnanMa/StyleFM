@@ -1,4 +1,4 @@
-#This code is modified from freeinit => https://github.com/jiwoogit/StyleID
+#This code is from StyleID => https://github.com/jiwoogit/StyleID
 name: StyleFM
 channels:
   - pytorch
