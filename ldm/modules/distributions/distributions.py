@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-
+'''This code is from stable-diffusion => https://github.com/CompVis/stable-diffusion'''
 
 class AbstractDistribution:
     def sample(self):
