@@ -9,6 +9,7 @@ import os
 
 from ldm.modules.diffusionmodules.util import checkpoint
 
+'''This code is from StyleID => https://github.com/jiwoogit/StyleID'''
 
 def exists(val):
     return val is not None
