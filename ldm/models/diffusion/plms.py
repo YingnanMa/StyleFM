@@ -7,6 +7,7 @@ from functools import partial
 
 from ldm.modules.diffusionmodules.util import make_ddim_sampling_parameters, make_ddim_timesteps, noise_like
 
+'''This code is from stable-diffusion => https://github.com/CompVis/stable-diffusion'''
 
 class PLMSSampler(object):
     def __init__(self, model, schedule="linear", **kwargs):
