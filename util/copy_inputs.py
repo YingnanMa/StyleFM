@@ -1,5 +1,8 @@
 import os, shutil, argparse
 
+'''This code is from freeinit => https://github.com/jiwoogit/StyleID'''
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--cnt', default = './data/cnt')
 parser.add_argument('--sty', default = './data/sty')
