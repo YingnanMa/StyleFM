@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-
+'''This code is from stable-diffusion => https://github.com/CompVis/stable-diffusion'''
 
 class LitEma(nn.Module):
     def __init__(self, model, decay=0.9999, use_num_upates=True):
