@@ -13,7 +13,7 @@ from natsort import natsorted
 from ldm.modules.diffusionmodules.openaimodel import EncoderUNetModel, UNetModel
 from ldm.util import log_txt_as_img, default, ismap, instantiate_from_config
 
-'''This code is from freeinit => https://github.com/CompVis/stable-diffusion'''
+'''This code is from stable-diffusion => https://github.com/CompVis/stable-diffusion'''
 
 __models__ = {
     'class_label': EncoderUNetModel,
