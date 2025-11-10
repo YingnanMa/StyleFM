@@ -34,11 +34,6 @@ For running StyleFM, run:
 python run_inference.py --cnt <content_img_dir> --sty <style_img_dir>
 ```
 
-For running default configuration in sample image files, run:
-```
-python run_inference.py --cnt testset/cnt --sty testset/sty  # default
-```
-
 To fine-tune the parameters, you have control over the following aspects in the style transfer:
 
 - **Attention Recursive weight** is controlled by the `--q_prime_weight` and `--k_prime_weight` parameter(k,v share the same weight).
@@ -48,7 +43,7 @@ To fine-tune the parameters, you have control over the following aspects in the 
 
 ## Test StyleFM
 
-Testset (from StyleID) is provided in "./testset" directory. Before executing evalution code, please run the command below to duplicate the content and style images to match the number of stylized images first (40 styles, 20 contents -> 800 style images, 800 content images).
+Testset (from StyleID) is provided in "./data" directory. Before executing evalution code, please run the command below to duplicate the content and style images to match the number of stylized images first (40 styles, 20 contents -> 800 style images, 800 content images).
 
 ```
 python util/copy_inputs.py --cnt testset/cnt --sty testset/sty
