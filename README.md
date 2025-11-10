@@ -46,7 +46,7 @@ To fine-tune the parameters, you have control over the following aspects in the 
 Testset (from StyleID) is provided in "./data" directory. Before executing evalution code, please run the command below to duplicate the content and style images to match the number of stylized images first (40 styles, 20 contents -> 800 style images, 800 content images).
 
 ```
-python util/copy_inputs.py --cnt testset/cnt --sty testset/sty
+python util/copy_inputs.py --cnt data/cnt --sty data/sty
 ```
 
 For running the evaluation:
