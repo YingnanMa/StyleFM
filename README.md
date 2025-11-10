@@ -1,6 +1,6 @@
 # StyleFM
 This is the official PyTorch implementation of our paper: "StyleFM: Frequency Manipulation Empowered by Recursive Attention on
-Diffusion Models for Arbitrary Style Transfer"(AAAI 2026)
+Diffusion Models for Arbitrary Style Transfer"(Accepted by AAAI 2026)
 
 ### Prerequisites
 - NVIDIA V100 GPU
