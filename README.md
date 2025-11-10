@@ -35,7 +35,7 @@ python run_inference.py --cnt <content_img_dir> --sty <style_img_dir>
 
 For running default configuration in sample image files, run:
 ```
-python run_inference.py --cnt data/cnt --sty data/sty  # default
+python run_inference.py --cnt testset/cnt --sty testset/sty  # default
 ```
 
 To fine-tune the parameters, you have control over the following aspects in the style transfer:
