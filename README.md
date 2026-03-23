@@ -1,7 +1,6 @@
 # StyleFM
 This is the official PyTorch implementation of our paper: ["StyleFM: Frequency Manipulation Empowered by Recursive Attention on
-Diffusion Models for Arbitrary Style Transfer"]
-(https://ojs.aaai.org/index.php/AAAI/article/view/37730)
+Diffusion Models for Arbitrary Style Transfer"](https://ojs.aaai.org/index.php/AAAI/article/view/37730)
 (**AAAI 2026**)   
 
 ### Prerequisites
